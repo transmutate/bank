@@ -14,12 +14,13 @@ def isid(ds, var, only_based_on_non_miss=True):
 
 
 
+# like the good old ones from stata back in the day
 def tab(var, incl_miss=True, sort_by='alp'):
     """ STATA'S TAB COMMAND """
     tot = len(var)
     dict_c = {}
 
-    if type(var[0]) == str:
+    if var.dtype == object:
         miss_count = 0
         for i in var:
             if len(i) > 0:
