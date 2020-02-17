@@ -53,4 +53,4 @@ def tab(var, incl_miss=True, sort_by='alp'):
 
     t = t[['count','perc','cum_perc']]
     T = t.style.format({'count':'{:,}', 'perc':'{:.2%}', 'cum_perc':'{:.2%}'})
-    display(T)
+    return T
