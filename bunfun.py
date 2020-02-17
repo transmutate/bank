@@ -33,14 +33,17 @@ def tab(var, incl_miss=True, sort_by='alp'):
 
     if sort_by == 'alp':
         t = pd.DataFrame.from_dict(dict_c, orient='index', columns=['count']).sort_index()
-        t = t.append(pd.DataFrame({'count':miss_count}, index=['MISSING']))
+        if miss_count > 0:
+            t = t.append(pd.DataFrame({'count':miss_count}, index=['MISSING']))
     elif sort_by == 'des':
         t = pd.DataFrame.from_dict(dict_c, orient='index', columns=['count'])
-        t = t.append(pd.DataFrame({'count':miss_count}, index=['MISSING']))
+        if miss_count > 0:
+            t = t.append(pd.DataFrame({'count':miss_count}, index=['MISSING']))
         t.sort_values('count',ascending=False, inplace=True)
     else:
         t = pd.DataFrame.from_dict(dict_c, orient='index', columns=['count'])
-        t = t.append(pd.DataFrame({'count':miss_count}, index=['MISSING']))
+        if miss_count > 0:
+            t = t.append(pd.DataFrame({'count':miss_count}, index=['MISSING']))
         t.sort_values('count', inplace=True)
 
     t['perc'] = t['count'] / t['count'].sum()
