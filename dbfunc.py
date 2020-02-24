@@ -33,9 +33,14 @@ def spit_it_out(pds):
   return varname_xwalk_df, pds
 
 def readin(ds_col_name, ds_name):
-  col = sqlContext.table(ds_col_name).select("*").toPandas()
-  renvar_dict = dict(zip(col['id'], col['varname']))
+    import pyspark
+    from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType
+    from pyspark.sql.functions import concat, col, lit
 
-  ds = sqlContext.table(ds_name).select("*").toPandas()
-  ds.rename(columns=renvar_dict, inplace=True)
-  return ds
+    
+    col = sqlContext.table(ds_col_name).select("*").toPandas()
+    renvar_dict = dict(zip(col['id'], col['varname']))
+
+    ds = sqlContext.table(ds_name).select("*").toPandas()
+    ds.rename(columns=renvar_dict, inplace=True)
+    return ds
