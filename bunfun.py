@@ -54,3 +54,27 @@ def tab(var, incl_miss=True, sort_by='alp'):
     t = t[['count','perc','cum_perc']]
     T = t.style.format({'count':'{:,}', 'perc':'{:.2%}', 'cum_perc':'{:.2%}'})
     return T
+
+
+
+
+
+# THANK YOU EMIL
+def isconst(dsr, byvar, voi, _inds=False):
+  """ Emil's isconstant command. byvar and voi MUST BE LISTS (in square brackets). Returns dataset with _inds_* variable if _inds==True """
+
+  ds = dsr[byvar + voi].copy()
+  for v in voi:
+    gbv = byvar + [v]
+    gb = ds[gbv].copy().groupby(byvar).nunique()
+    if gb[v].max() > 1:
+      print(f"Variable {v} is NOT constant by {byvar}")
+      if _inds == True:
+        gb = gb[v]
+        gb.rename(columns={v: f"_inds_{v}"})
+        gb[v] = np.where(gb[v]==1, 0, gb[v])
+        gb.reset_index(inplace=True)
+        ds = ds.merge(gb.reset_index(), on=byvar)
+
+  if _inds==True:
+    return ds
