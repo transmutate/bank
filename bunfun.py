@@ -58,23 +58,26 @@ def tab(var, incl_miss=True, sort_by='alp'):
 
 
 
-
 # THANK YOU EMIL
 def isconst(dsr, byvar, voi, _inds=False):
   """ Emil's isconstant command. byvar and voi MUST BE LISTS (in square brackets). Returns dataset with _inds_* variable if _inds==True """
-
+  not_constant_indi = 0
   ds = dsr[byvar + voi].copy()
   for v in voi:
     gbv = byvar + [v]
     gb = ds[gbv].copy().groupby(byvar).nunique()
     if gb[v].max() > 1:
+      not_constant_indi = 1
       print(f"Variable {v} is NOT constant by {byvar}")
       if _inds == True:
-        gb = gb[v]
-        gb.rename(columns={v: f"_inds_{v}"})
-        gb[v] = np.where(gb[v]==1, 0, gb[v])
+        gb = gb[[v]]
+        gb.loc[:,v] = np.where(gb[v]==1, 0, gb[v])
+        gb.rename(columns={v: f"_inds_{v}"}, inplace=True)
         gb.reset_index(inplace=True)
-        ds = ds.merge(gb.reset_index(), on=byvar)
+        ds = ds.merge(gb, on=byvar)
 
-  if _inds==True:
-    return ds
+  if (_inds==True):
+    if (not_constant_indi == 1):
+      return ds
+    else:
+      return "EVERYTHANG CONSTANT"
