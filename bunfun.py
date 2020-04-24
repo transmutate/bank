@@ -62,7 +62,8 @@ def tab(var, incl_miss=True, sort_by='alp'):
 def isconst(dsr, byvar, voi, _inds=False):
   """ Emil's isconstant command. byvar and voi MUST BE LISTS (in square brackets). Returns dataset with _inds_* variable if _inds==True """
   not_constant_indi = 0
-  ds = dsr[byvar + voi].copy()
+  # ds = dsr[byvar + voi].copy()
+  ds = dsr.copy()
   for v in voi:
     gbv = byvar + [v]
     gb = ds[gbv].copy().groupby(byvar).nunique()
@@ -81,3 +82,36 @@ def isconst(dsr, byvar, voi, _inds=False):
       return ds
     else:
       return "EVERYTHANG CONSTANT"
+
+
+
+
+
+def compare(ds, fir, sec):
+    """ STATA'S COMPARE COMMAND """
+    if ds[fir].dtype == object:
+        boff = ds[[fir,sec]].dropna()
+        firs = ds[fir].dropna()
+        seco = ds[sec].dropna()
+
+        print("_"*77)
+        print(f"{fir} == {sec}: {len(boff[boff[fir]==boff[sec]]):,d}")
+        print(f"{fir} != {sec}: {len(boff[boff[fir]!=boff[sec]]):,d}")
+        print()
+        print(f"jointly_defined: {' '*(max(len(fir),len(sec)))} {len(boff):,d}")
+        print(f"{fir} missing only: {len(ds) - len(firs):,d}")
+        print(f"{sec} missing only: {len(ds) - len(seco):,d}")
+        print("-"*77)
+
+
+
+
+
+def order(ds, voi, front=True):
+    """ STATA'S DATASET ORDERING COMMAND """
+    cols = list(ds.columns)
+    for v in voi:
+        cols.remove(v)
+
+    c2u = voi + cols if front == True else cols + voi
+    return ds[c2u]
