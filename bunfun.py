@@ -115,3 +115,11 @@ def order(ds, voi, front=True):
 
     c2u = voi + cols if front == True else cols + voi
     return ds[c2u]
+
+
+
+def count_missing(ds):
+    """ emil's count_missing command """
+    print(
+        (ds.isna().sum()[ds.isna().sum()>0] / len(ds)).apply("{:.2%}".format)
+    )
