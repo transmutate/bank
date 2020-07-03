@@ -60,44 +60,44 @@ def tab(var, incl_miss=True, sort_by='alp'):
 
 # THANK YOU EMIL
 def isconst(dsr, byvar, voi, _inds=False):
-  """
-    Emil's isconstant command.
-    Upgraded a lil bit.
-    byvar and voi MUST BE LISTS (in square brackets).
-    Returns dataset with _inds_* variable if _inds==True
-  """
+    """
+      Emil's isconstant command.
+      Upgraded a lil bit.
+      byvar and voi MUST BE LISTS (in square brackets).
+      Returns dataset with _inds_* variable if _inds==True
+    """
 
-  n_obs_width = len(str(len(dsr)))
-  n_d = n_obs_width + (n_obs_width//3) + 1
+    n_obs_width = len(str(len(dsr)))
+    n_d = n_obs_width + (n_obs_width//3) + 1
 
-  max_len = max([len(i) for i in voi]) + 2
-  not_constant_indi = 0
-  ds = dsr.copy()
-  for v in voi:
-    gbv = byvar + [v]
-    gb = ds[gbv].copy().groupby(byvar).nunique()
+    max_len = max([len(i) for i in voi]) + 2
+    not_constant_indi = 0
+    ds = dsr.copy()
+    for v in voi:
+        gbv = byvar + [v]
+        gb = ds[gbv].copy().groupby(byvar).nunique()
 
-    n_problem_byvar = len(gb[gb[v]>1])
-    n_inconsist_obs = gb.loc[gb[v]>1,v].sum()
+        n_problem_byvar = len(gb[gb[v]>1])
+        n_inconsist_obs = gb.loc[gb[v]>1,v].sum()
 
-    if gb[v].max() > 1:
-      not_constant_indi = 1
-      print(
-        "{:<{max_len}} NOT constant: {:<{n_d},.0f} byvars w/ {:<{n_d},.0f} values"\
-            .format(v, n_problem_byvar, n_inconsist_obs, max_len=max_len, n_d=n_d)
-      )
-      if _inds == True:
-        gb = gb[[v]]
-        gb.loc[:,v] = np.where(gb[v]==1, 0, gb[v])
-        gb.rename(columns={v: f"_inds_{v}"}, inplace=True)
-        gb.reset_index(inplace=True)
-        ds = ds.merge(gb, on=byvar)
+        if gb[v].max() > 1:
+            not_constant_indi = 1
+            print(
+                "{:<{max_len}} NOT constant: {:<{n_d},.0f} byvars w/ {:<{n_d},.0f} values"\
+                    .format(v, n_problem_byvar, n_inconsist_obs, max_len=max_len, n_d=n_d)
+            )
+            if _inds == True:
+                gb = gb[[v]]
+                gb.loc[:,v] = np.where(gb[v]==1, 0, gb[v])
+                gb.rename(columns={v: f"_inds_{v}"}, inplace=True)
+                gb.reset_index(inplace=True)
+                ds = ds.merge(gb, on=byvar)
 
-  if (_inds==True):
-    if (not_constant_indi == 1):
-      return ds
-    else:
-      return "EVERYTHANG CONSTANT"
+    if (_inds==True):
+        if (not_constant_indi == 1):
+            return ds
+        else:
+            return "EVERYTHANG CONSTANT"
 
 
 
@@ -123,61 +123,61 @@ def compare_dates(fm, tu, pv=.25, labs=['first date','second date']):
     """
     compares 2 pandas timestamps in series
     """
-  perc = np.arange(0,1,pv)
+    perc = np.arange(0,1,pv)
 
 
-  print("*"*88)
-  print("-"*55)
-  if any(fm.isna()==True) | any(fm.isna()==True):
-    print('{:<30} {:<12,.0f} {:<12,.2%}'\
-          .format(f"Missing {labs[0]} only:",
-                  sum((fm.isna()==True)&(tu.isna())==False),
-                  sum((fm.isna()==True)&(tu.isna()==False))/len(fm))
+    print("*"*88)
+    print("-"*55)
+    if any(fm.isna()==True) | any(fm.isna()==True):
+        print('{:<30} {:<12,.0f} {:<12,.2%}'\
+              .format(f"Missing {labs[0]} only:",
+                      sum((fm.isna()==True)&(tu.isna())==False),
+                      sum((fm.isna()==True)&(tu.isna()==False))/len(fm))
+        )
+        print('{:<30} {:<12,.0f} {:<12,.2%}'\
+              .format(f"Missing {labs[1]} only:",
+                      sum((fm.isna()==False)&(tu.isna())==True),
+                      sum((fm.isna()==False)&(tu.isna()==True))/len(fm))
+        )
+        print('{:<30} {:<12,.0f} {:<12,.2%}'\
+              .format('Both not missing:',
+                      sum((fm.isna()==False)&(tu.isna())==False),
+                      sum((fm.isna()==False)&(tu.isna()==False))/len(fm))
+        )
+        _n = sum((fm.isna()==False)&(tu.isna()==False))
+    else:
+        print('Nothing missing in both dates')
+        _n = len(fm)
+
+    print("-"*55)
+    diff = (tu.dt.date - fm.dt.date).dt.days
+    same = diff == 0
+    d1_b = diff <  0
+    d2_b = diff >  0
+    print(
+      '{:<30} {:<12,.0f} {:<12,.2%}'.format('Same:',sum(diff==0), sum(same)/_n)
     )
-    print('{:<30} {:<12,.0f} {:<12,.2%}'\
-          .format(f"Missing {labs[1]} only:",
-                  sum((fm.isna()==False)&(tu.isna())==True),
-                  sum((fm.isna()==False)&(tu.isna()==True))/len(fm))
+    print(
+      '{:<30} {:<12,.0f} {:<12,.2%}'.format(f"{labs[0]} earlier:",sum(diff>0), sum(diff>0)/_n)
     )
-    print('{:<30} {:<12,.0f} {:<12,.2%}'\
-          .format('Both not missing:',
-                  sum((fm.isna()==False)&(tu.isna())==False),
-                  sum((fm.isna()==False)&(tu.isna()==False))/len(fm))
+    print(
+      '{:<30} {:<12,.0f} {:<12,.2%}'.format(f"{labs[1]} earlier:",sum(diff<0), sum(diff<0)/_n)
     )
-    _n = sum((fm.isna()==False)&(tu.isna()==False))
-  else:
-    print('Nothing missing in both dates')
-    _n = len(fm)
+    print("-"*55)
 
-  print("-"*55)
-  diff = (tu.dt.date - fm.dt.date).dt.days
-  same = diff == 0
-  d1_b = diff <  0
-  d2_b = diff >  0
-  print(
-    '{:<30} {:<12,.0f} {:<12,.2%}'.format('Same:',sum(diff==0), sum(same)/_n)
-  )
-  print(
-    '{:<30} {:<12,.0f} {:<12,.2%}'.format(f"{labs[0]} earlier:",sum(diff>0), sum(diff>0)/_n)
-  )
-  print(
-    '{:<30} {:<12,.0f} {:<12,.2%}'.format(f"{labs[1]} earlier:",sum(diff<0), sum(diff<0)/_n)
-  )
-  print("-"*55)
+    c = pd.concat([diff[diff>0].describe(percentiles=perc),
+                   diff[diff<0].describe(percentiles=perc)], axis=1)\
+                  .rename(columns={0:f"{labs[0]} earlier by:",
+                                   1:f"{labs[1]} earlier by:"})
 
-  c = pd.concat([diff[diff>0].describe(percentiles=perc),
-                 diff[diff<0].describe(percentiles=perc)], axis=1)\
-                .rename(columns={0:f"{labs[0]} earlier by:",
-                                 1:f"{labs[1]} earlier by:"})
+    print(c.to_string(formatters={f"{labs[0]} earlier by:":"{:.2f}".format,
+                                  f"{labs[1]} earlier by:":"{:.2f}".format}))
 
-  print(c.to_string(formatters={f"{labs[0]} earlier by:":"{:.2f}".format,
-                                f"{labs[1]} earlier by:":"{:.2f}".format}))
+    return np.where(diff==0, 'same',\
+           np.where(diff> 0, f"{labs[0]}_earlier",f"{labs[1]}_earlier"))
 
-  return np.where(diff==0, 'same',\
-         np.where(diff> 0, f"{labs[0]}_earlier",f"{labs[1]}_earlier"))
-
-  print("-"*55)
-  print("*"*88)
+    print("-"*55)
+    print("*"*88)
 
 
 
