@@ -132,7 +132,21 @@ def compare(ds, fir, sec):
 
 
 
+def convert_td_components_to_values(cdf, wr2):
+    comp_labs = ['days', 'hours', 'minutes', 'seconds', 'milliseconds', 'microseconds','nanoseconds']
 
+    if wr2 == "seconds":
+        return cdf.apply(lambda x: x[0]*86400 + x[1]*3600 + x[2]*60 + x[3], axis=1)
+
+    elif wr2 == "minutes":
+        return cdf.apply(lambda x: x[0]*1440 + x[1]*60 + x[2], axis=1)
+
+    elif wr2 == "hours":
+        return cdf.apply(lambda x: x[0]*24 + x[1], axis=1)
+
+    else:
+        return cdf['days']
+    
 def compare_dates(fm, tu, wr2='seconds', pv=.25, labs=['first date','second date'],
                    _ind = False
                   ):
