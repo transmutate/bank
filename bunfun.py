@@ -129,6 +129,10 @@ def compare(ds, fir, sec):
         print(f"{sec} missing only: {len(ds) - len(seco):,d}")
         print("-"*77)
 
+
+
+
+
 def compare_dates(fm, tu, wr2='seconds', pv=.25, labs=['first date','second date'],
                    _ind = False
                   ):
@@ -192,64 +196,9 @@ def compare_dates(fm, tu, wr2='seconds', pv=.25, labs=['first date','second date
                np.where(diff> 0, f"{labs[0]} earlier",f"{labs[1]} earlier"))
 
     print("-"*55)
-    print("*"*88)    """
-    compares 2 pandas timestamps in series
-    """
-    perc = np.arange(0,1,pv)
-
-
     print("*"*88)
-    print("-"*55)
-    if any(fm.isna()==True) | any(fm.isna()==True):
-        print('{:<30} {:<12,.0f} {:<12,.2%}'\
-              .format(f"Missing {labs[0]} only:",
-                      sum((fm.isna()==True)&(tu.isna())==False),
-                      sum((fm.isna()==True)&(tu.isna()==False))/len(fm))
-        )
-        print('{:<30} {:<12,.0f} {:<12,.2%}'\
-              .format(f"Missing {labs[1]} only:",
-                      sum((fm.isna()==False)&(tu.isna())==True),
-                      sum((fm.isna()==False)&(tu.isna()==True))/len(fm))
-        )
-        print('{:<30} {:<12,.0f} {:<12,.2%}'\
-              .format('Both not missing:',
-                      sum((fm.isna()==False)&(tu.isna())==False),
-                      sum((fm.isna()==False)&(tu.isna()==False))/len(fm))
-        )
-        _n = sum((fm.isna()==False)&(tu.isna()==False))
-    else:
-        print('Nothing missing in both dates')
-        _n = len(fm)
 
-    print("-"*55)
-    diff = (tu.dt.date - fm.dt.date).dt.days
-    same = diff == 0
-    d1_b = diff <  0
-    d2_b = diff >  0
-    print(
-      '{:<30} {:<12,.0f} {:<12,.2%}'.format('Same:',sum(diff==0), sum(same)/_n)
-    )
-    print(
-      '{:<30} {:<12,.0f} {:<12,.2%}'.format(f"{labs[0]} earlier:",sum(diff>0), sum(diff>0)/_n)
-    )
-    print(
-      '{:<30} {:<12,.0f} {:<12,.2%}'.format(f"{labs[1]} earlier:",sum(diff<0), sum(diff<0)/_n)
-    )
-    print("-"*55)
 
-    c = pd.concat([diff[diff>0].describe(percentiles=perc),
-                   diff[diff<0].describe(percentiles=perc)], axis=1)\
-                  .rename(columns={0:f"{labs[0]} earlier by:",
-                                   1:f"{labs[1]} earlier by:"})
-
-    print(c.to_string(formatters={f"{labs[0]} earlier by:":"{:.2f}".format,
-                                  f"{labs[1]} earlier by:":"{:.2f}".format}))
-
-    return np.where(diff==0, 'same',\
-           np.where(diff> 0, f"{labs[0]}_earlier",f"{labs[1]}_earlier"))
-
-    print("-"*55)
-    print("*"*88)
 
 
 
@@ -261,6 +210,8 @@ def order(ds, voi, front=True):
 
     c2u = voi + cols if front == True else cols + voi
     return ds[c2u]
+
+
 
 
 
