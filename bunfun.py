@@ -15,45 +15,55 @@ def isid(ds, var, only_based_on_non_miss=True):
 
 
 # like the good old ones from stata back in the day
-def tab(var, incl_miss=True, sort_by='alp'):
-    """ STATA'S TAB COMMAND """
-    var = var.astype(str)
-    tot = len(var)
-    dict_c = {}
+def tab(series):
+  colname = 0 if series.name == None else series.name
 
-    miss_count = 0
-    for i in var:
-        if i != 'nan':
-            if i in dict_c:
-                dict_c[i] += 1
-            else:
-                dict_c[i] = 1
-        else:
-            miss_count += 1
+  df = pd.DataFrame(series)
+  tabulated = df.groupby(colname)[[colname]].count().rename(columns={colname:'cnt'})
+  tabulated = tabulated[tabulated['cnt']>0]
+  tabulated['perc'] = tabulated['cnt'] / len(df)
 
-    if sort_by == 'alp':
-        t = pd.DataFrame.from_dict(dict_c, orient='index', columns=['count']).sort_index()
-        if miss_count > 0:
-            t = t.append(pd.DataFrame({'count':miss_count}, index=['MISSING']))
-    elif sort_by == 'des':
-        t = pd.DataFrame.from_dict(dict_c, orient='index', columns=['count'])
-        if miss_count > 0:
-            t = t.append(pd.DataFrame({'count':miss_count}, index=['MISSING']))
-        t.sort_values('count',ascending=False, inplace=True)
-    else:
-        t = pd.DataFrame.from_dict(dict_c, orient='index', columns=['count'])
-        if miss_count > 0:
-            t = t.append(pd.DataFrame({'count':miss_count}, index=['MISSING']))
-        t.sort_values('count', inplace=True)
+  if tabulated.index.dtype.name == 'category':
+    tabulated.index = tabulated.index.astype(str)
+#   elif tabulated.index.is_numeric() == True:
+#     if tabulated.index.dtype.name in([np.int32, np.int16, np.int64]):
+#       tabulated.index = tabulated.index.astype(float)
+#     assign_value = np.nan
+#   else:
+#     assign_value = "rest"
 
-    t['perc'] = t['count'] / t['count'].sum()
-    t['cum_perc'] = t['perc'].cumsum()
+  remaining = df[df[colname].isna()==True]
+  if len(remaining) > 0:
+    rest = (
+      pd.DataFrame.from_dict(
+        {
+          colname: ["MISSING"],
+          'cnt':   [len(remaining)],
+          'perc':  [len(remaining)/len(df)]
+        }
+      ).set_index(colname)
+    )
 
-    t = t.append(pd.DataFrame({'count':[tot], 'perc':[1]}, index=['TOTAL']))
+    tabulated = tabulated.append(rest)
 
-    t = t[['count','perc','cum_perc']]
-    T = t.style.format({'count':'{:,}', 'perc':'{:.2%}', 'cum_perc':'{:.2%}'})
-    return T
+  tabulated['cum_perc'] = tabulated['perc'].cumsum()
+  tabulated['cum_perc'] = tabulated.apply(lambda x: "{:.2%}".format(x['cum_perc']), axis=1)
+
+  total_row = (
+    pd.DataFrame.from_dict(
+      {
+        colname: ["TOTAL"],
+        'cnt': [tabulated['cnt'].sum()],
+        'perc':  [1],
+        'cum_perc': ""
+      }
+    ).set_index(colname)
+  )
+  tabulated = tabulated.append(total_row)
+  tabulated['cnt'] = tabulated.apply(lambda x: "{:,}".format(x['cnt']), axis=1)
+  tabulated['perc'] = tabulated.apply(lambda x: "{:.2%}".format(x['perc']), axis=1)
+
+  return tabulated
 
 
 
@@ -119,8 +129,70 @@ def compare(ds, fir, sec):
         print(f"{sec} missing only: {len(ds) - len(seco):,d}")
         print("-"*77)
 
-def compare_dates(fm, tu, pv=.25, labs=['first date','second date']):
+def compare_dates(fm, tu, wr2='seconds', pv=.25, labs=['first date','second date'],
+                   _ind = False
+                  ):
     """
+    compares 2 pandas timestamps in series
+    """
+
+    perc = np.arange(0,1,pv)
+
+
+    print("*"*88)
+    print("-"*55)
+    if any(fm.isna()==True) | any(fm.isna()==True):
+        print('{:<30} {:<12,.0f} {:<12,.2%}'\
+              .format(f"Missing {labs[0]} only:",
+                      sum((fm.isna()==True)&(tu.isna())==False),
+                      sum((fm.isna()==True)&(tu.isna()==False))/len(fm))
+        )
+        print('{:<30} {:<12,.0f} {:<12,.2%}'\
+              .format(f"Missing {labs[1]} only:",
+                      sum((fm.isna()==False)&(tu.isna())==True),
+                      sum((fm.isna()==False)&(tu.isna()==True))/len(fm))
+        )
+        print('{:<30} {:<12,.0f} {:<12,.2%}'\
+              .format('Both not missing:',
+                      sum((fm.isna()==False)&(tu.isna())==False),
+                      sum((fm.isna()==False)&(tu.isna()==False))/len(fm))
+        )
+        _n = sum((fm.isna()==False)&(tu.isna()==False))
+    else:
+        print('Nothing missing in both dates')
+        _n = len(fm)
+
+    print("-"*55)
+#     diff = (tu - fm).dt.seconds
+    comps = (tu - fm).dt.components
+    diff = convert_td_components_to_values(comps, wr2)
+    same = diff == 0
+    d1_b = diff <  0
+    d2_b = diff >  0
+    print(
+      '{:<30} {:<12,.0f} {:<12,.2%}'.format('Same:',sum(diff==0), sum(same)/_n)
+    )
+    print(
+      '{:<30} {:<12,.0f} {:<12,.2%}'.format(f"{labs[0]} earlier:",sum(diff>0), sum(diff>0)/_n)
+    )
+    print(
+      '{:<30} {:<12,.0f} {:<12,.2%}'.format(f"{labs[1]} earlier:",sum(diff<0), sum(diff<0)/_n)
+    )
+    print("-"*55)
+
+    c = pd.concat([diff[d2_b].describe(percentiles=perc),
+                   diff[d1_b].describe(percentiles=perc)], axis=1)
+    c.columns = [f"{labs[0]} earlier by:", f"{labs[1]} earlier by:"]
+
+    print(c.to_string(formatters={f"{labs[0]} earlier by:":"{:.2f}".format,
+                                  f"{labs[1]} earlier by:":"{:.2f}".format}))
+
+    if _ind == True:
+        return np.where(diff==0, 'same',\
+               np.where(diff> 0, f"{labs[0]} earlier",f"{labs[1]} earlier"))
+
+    print("-"*55)
+    print("*"*88)    """
     compares 2 pandas timestamps in series
     """
     perc = np.arange(0,1,pv)
